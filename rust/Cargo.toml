@@ -3,6 +3,7 @@ resolver = "2"
 members = [
     "hw/char/pl011",
     "hw/timer/hpet",
+    "hw/ssi",
     "tests",
 ]
 

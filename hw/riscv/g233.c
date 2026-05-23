@@ -18,7 +18,9 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+
 #include "qemu/osdep.h"
+#include "hw/ssi/ssi.h"
 #include "qemu/units.h"
 #include "qemu/error-report.h"
 #include "qemu/guest-random.h"
@@ -96,6 +98,9 @@ static const MemMapEntry virt_memmap[] = {
     [VIRT_UART0] =        { 0x10000000,         0x100 },
     [VIRT_VIRTIO] =       { 0x10001000,        0x1000 },
     [VIRT_FW_CFG] =       { 0x10100000,          0x18 },
+    //SPI 基地址和大小
+    [VIRT_SPI] =          { 0x10018000,        0x1000 },
+    [VIRT_RSPI] =         { 0x10019000,        0x1000 },
     [VIRT_FLASH] =        { 0x20000000,     0x4000000 },
     [VIRT_IMSIC_M] =      { 0x24000000, VIRT_IMSIC_MAX_SIZE },
     [VIRT_IMSIC_S] =      { 0x28000000, VIRT_IMSIC_MAX_SIZE },
@@ -1748,6 +1753,42 @@ static void virt_machine_init(MachineState *machine)
 
         sysbus_realize_and_unref(SYS_BUS_DEVICE(iommu_sys), &error_fatal);
     }
+    //添加spi控制实体
+    //和对应在rust中注册的类名一致
+    DeviceState *spi_dev = qdev_new("g233.spi");
+    SysBusDevice *spi_sbd =SYS_BUS_DEVICE(spi_dev);
+    //挂在mmio内存空间和中断线
+    sysbus_realize_and_unref(spi_sbd,&error_fatal);
+    sysbus_mmio_map(spi_sbd,0,virt_memmap[VIRT_SPI].base);
+    //将spi_irq(5)连接到plic
+    sysbus_connect_irq(spi_sbd,0,qdev_get_gpio_in(mmio_irqchip,SPI_IRQ));
+    //获取spi控制器内部的ssi总线，rust后续需要暴露相应总线
+    SSIBus *ssi_bus = (SSIBus *)qdev_get_child_bus(spi_dev,"ssi");
+
+
+    //创建并连接另一个flash设备，w25x16 作为上层模型驱动，rust后续需要暴露相应总线
+    DeviceState *flash_cs0 = ssi_create_peripheral(ssi_bus,"w25x16");
+    //获取flash的片选引脚
+    qemu_irq flash_cs0_irq = qdev_get_gpio_in_named(flash_cs0,SSI_GPIO_CS,0);
+    //连接flash的片选引脚到spi
+    sysbus_connect_irq(spi_sbd,1,flash_cs0_irq);
+    DeviceState *flash_cs1 = qdev_new("w25x32");
+    qdev_prop_set_uint8(flash_cs1, "cs", 1);
+    ssi_realize_and_unref(flash_cs1, ssi_bus, &error_fatal);
+    qemu_irq flash_cs1_irq = qdev_get_gpio_in_named(flash_cs1,SSI_GPIO_CS,0);
+    sysbus_connect_irq(spi_sbd,2,flash_cs1_irq);
+
+    // Rust SPI rspi
+    DeviceState *rspi_dev = qdev_new("g233.rspi");
+    SysBusDevice *rspi_sbd = SYS_BUS_DEVICE(rspi_dev);
+    sysbus_realize_and_unref(rspi_sbd, &error_fatal);
+    sysbus_mmio_map(rspi_sbd, 0, virt_memmap[VIRT_RSPI].base);
+    sysbus_connect_irq(rspi_sbd, 0, qdev_get_gpio_in(mmio_irqchip, RSPI_IRQ));
+
+    SSIBus *rspi_ssi_bus = (SSIBus *)qdev_get_child_bus(rspi_dev, "ssi");
+    DeviceState *rspi_flash = ssi_create_peripheral(rspi_ssi_bus, "w25x32");
+    qemu_irq rspi_flash_cs_irq = qdev_get_gpio_in_named(rspi_flash, SSI_GPIO_CS, 0);
+    sysbus_connect_irq(rspi_sbd, 1, rspi_flash_cs_irq);
 
     s->machine_done.notify = virt_machine_done;
     qemu_add_machine_init_done_notifier(&s->machine_done);

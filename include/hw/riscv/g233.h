@@ -67,7 +67,7 @@ struct RISCVG233State {
     OnOffAuto iommu_sys;
     uint16_t pci_iommu_bdf;
 };
-
+//地址枚举
 enum {
     VIRT_DEBUG,
     VIRT_MROM,
@@ -90,10 +90,14 @@ enum {
     VIRT_PLATFORM_BUS,
     VIRT_PCIE_ECAM,
     VIRT_IOMMU_SYS,
+    VIRT_SPI,
+    VIRT_RSPI,
 };
-
+//中断枚举
 enum {
     UART0_IRQ = 1,
+    SPI_IRQ = 5,
+    RSPI_IRQ = 7,
     VIRTIO_IRQ = 6, /* 6 to 13 */
     VIRTIO_COUNT = 8,
     RTC_IRQ = 14,

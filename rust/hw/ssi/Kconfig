@@ -1,0 +1,2 @@
+config X_SSI_RUST
+    bool
