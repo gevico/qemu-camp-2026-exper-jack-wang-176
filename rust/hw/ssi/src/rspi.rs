@@ -78,7 +78,13 @@ impl RspiState {
         self.init_mmio(&self.mmio);
         self.init_irq(&self.irq);
         self.init_irq(&self.cs0_line);
-        self.cs0_line.set(true);
+
+        let cs = self.cs_val() & 0x03;
+        if cs == 0 {
+            self.cs0_line.set(false);
+        } else {
+            self.cs0_line.set(true);
+        }
 
         let bus = unsafe {
             ssi_create_bus(

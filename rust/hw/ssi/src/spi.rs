@@ -81,8 +81,17 @@ impl SpiState {
         self.init_irq(&self.cs0_line);
         self.init_irq(&self.cs1_line);
 
-        self.cs0_line.set(true);
-        self.cs1_line.set(true);
+        let cs = self.cr2_val() & 0x03;
+        if cs == 0 {
+            self.cs0_line.set(false);
+            self.cs1_line.set(true);
+        } else if cs == 1 {
+            self.cs0_line.set(true);
+            self.cs1_line.set(false);
+        } else {
+            self.cs0_line.set(true);
+            self.cs1_line.set(true);
+        }
 
         let bus = unsafe {
             ssi_create_bus(

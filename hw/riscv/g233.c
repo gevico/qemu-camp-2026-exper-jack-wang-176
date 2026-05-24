@@ -1772,7 +1772,7 @@ static void virt_machine_init(MachineState *machine)
     qemu_irq flash_cs0_irq = qdev_get_gpio_in_named(flash_cs0,SSI_GPIO_CS,0);
     //连接flash的片选引脚到spi
     sysbus_connect_irq(spi_sbd,1,flash_cs0_irq);
-    DeviceState *flash_cs1 = qdev_new("w25x32");
+    DeviceState *flash_cs1 = qdev_new("w25x16");
     qdev_prop_set_uint8(flash_cs1, "cs", 1);
     ssi_realize_and_unref(flash_cs1, ssi_bus, &error_fatal);
     qemu_irq flash_cs1_irq = qdev_get_gpio_in_named(flash_cs1,SSI_GPIO_CS,0);
