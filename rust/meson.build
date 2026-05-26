@@ -49,6 +49,7 @@ subdir('tests')
 subdir('trace')
 subdir('hw')
 
+
 cargo = find_program('cargo', required: false)
 
 if cargo.found()

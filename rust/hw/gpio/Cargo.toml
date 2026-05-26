@@ -1,7 +1,7 @@
 [package]
-name = "ssi"
-version = "0.1.0"
-description = "SSI device model for QEMU"
+name = "gpio"
+version = "0.0.1"
+description = "GPIO device model for QEMU"
 resolver = "2"
 publish = false
 
@@ -13,7 +13,7 @@ repository.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-common = { path = "../../../common" }
+common = { path = "../../../common"}
 util = { path = "../../../util" }
 migration = { path = "../../../migration" }
 bql = { path = "../../../bql" }

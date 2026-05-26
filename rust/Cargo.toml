@@ -5,6 +5,7 @@ members = [
     "hw/timer/hpet",
     "hw/ssi",
     "tests",
+    "hw/gpio",
 ]
 
 [workspace.package]

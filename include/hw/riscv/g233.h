@@ -92,10 +92,12 @@ enum {
     VIRT_IOMMU_SYS,
     VIRT_SPI,
     VIRT_RSPI,
+    VIRT_GPIO,
 };
 //中断枚举
 enum {
     UART0_IRQ = 1,
+    GPIO_IRQ = 2,
     SPI_IRQ = 5,
     RSPI_IRQ = 7,
     VIRTIO_IRQ = 6, /* 6 to 13 */
