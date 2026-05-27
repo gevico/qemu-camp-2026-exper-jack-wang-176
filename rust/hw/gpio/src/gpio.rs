@@ -215,7 +215,6 @@ impl GpioState {
                 //判断触发条件 上升沿或者下降沿
                 if old_bool != new_bool{
                     //下降沿触发
-        
                         if !is_pol&&old_bool && !new_bool{
                             is |= b;
                         }
