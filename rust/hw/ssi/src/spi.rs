@@ -49,7 +49,23 @@ impl ObjectImpl for SpiState {
 
 impl DeviceImpl for SpiState {}
 
-impl ResettablePhasesImpl for SpiState {}
+impl ResettablePhasesImpl for SpiState {
+    const HOLD: Option<fn(&Self, ResetType)> = Some(Self::hold_reset);
+}
+
+impl SpiState {
+    fn hold_reset(&self, _type: ResetType) {
+        unsafe { *self.cr1.get() = 0; }
+        unsafe { *self.cr2.get() = 0; }
+        unsafe { *self.sr.get() = 0x0000_0002; } // Default SR
+        unsafe { *self.dr.get() = 0; }
+
+        // Propagate CS lines after wiring is complete
+        self.cs0_line.set(false); // CS0 active by default when CR2 = 0
+        self.cs1_line.set(true);  // CS1 inactive
+        self.irq.set(false);
+    }
+}
 
 impl SysBusDeviceImpl for SpiState {}
 
