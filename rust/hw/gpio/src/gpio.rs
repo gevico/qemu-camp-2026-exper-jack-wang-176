@@ -26,10 +26,10 @@ pub struct GpioState{
     dir: UnsafeCell<u32>,
     out: UnsafeCell<u32>, // 0x04: 输出数据寄存器[cite: 1]
     in_pins: UnsafeCell<u32>, // 物理外部输入 (非直接映射，用于合成 0x08 GPIO_IN)
-    ie: UnsafeCell<u32>,
-    is: UnsafeCell<u32>,
-    trig: UnsafeCell<u32>,
-    pol: UnsafeCell<u32>,
+    ie: UnsafeCell<u32>,//中断使能寄存器
+    is: UnsafeCell<u32>,//中断状态寄存器
+    trig: UnsafeCell<u32>,//中断触发类型寄存器
+    pol: UnsafeCell<u32>,//中断急性寄存器
 
     irq: InterruptSource,
     outlines: [InterruptSource; 32],
@@ -42,13 +42,16 @@ unsafe impl Sync for GpioState {}
 //改成rust实现
 impl GpioState{
     fn handle_gpio_in(&self,n: u32,level: u32){
+        let old_pins = self.get_now_pins();
         let b = 1 << n;
         if level != 0{
             unsafe { *self.in_pins.get() |= b; }
         }else{
             unsafe { *self.in_pins.get() &= !b; }
         }
-        //todo 添加中断状态判断
+        let new_pins = self.get_now_pins();
+        self.update_trigger_is(old_pins, new_pins);
+        self.update_irq();
     }
 }
 
@@ -134,7 +137,7 @@ impl GpioState{
             0x04 => self.out_val() as u64,
             0x08 => self.get_now_pins() as u64,
             0x0c => self.ie_val() as u64,
-            0x10 => self.is_val() as u64,
+            0x10 => self.get_effective_pins() as u64,
             0x14 => self.trig_val() as u64,
             0x18 => self.pol_val() as u64,
             _ => {
@@ -145,31 +148,133 @@ impl GpioState{
     }
     fn write(&self,offset: hwaddr,data: u64,_size: u32){
         let val = data as u32;
+        let old_pins = self.get_now_pins();
         match offset{
             0x00 => {
+                let old_dir = self.dir_val();
                 unsafe { *self.dir.get() = val; }
+                self.drive_output(self.out_val(), self.out_val(), old_dir, val);
+                self.update_trigger_is(old_pins, self.get_now_pins());
+                self.update_irq();
             }
             0x04 => {
+                let old_out = self.out_val();
                 unsafe { *self.out.get() = val; }
+                self.drive_output(old_out, val, self.dir_val(), self.dir_val());
+                self.update_trigger_is(old_pins, self.get_now_pins());
+                self.update_irq();
             }
             0x08 => {
                 // log::warn!("gpio: write to read-only register GPIO_IN");
             }
             0x0c => {
                 unsafe { *self.ie.get() = val; }
+                self.update_irq();
             }
             0x10 => {
-                unsafe { *self.is.get() = val; }
+                //这里需要添加针对is的写入逻辑
+                let mut is = self.is_val();
+                is &= !val;
+                unsafe { *self.is.get() = is; }
                 //todo 添加中断触发逻辑
+                self.update_irq();
             }
             0x14 => {
                 unsafe { *self.trig.get() = val; }
+                self.update_irq();
             }
             0x18 => {
                 unsafe { *self.pol.get() = val; }
+                self.update_irq();
             }
             _ => {
                 // log::warn!("gpio: invalid write offset {:#x}",offset);
+            }
+        }
+    }
+}
+
+//添加中断处理方法，稍后需要根据这些中断处理方法来更新read和write函数
+impl GpioState {
+    fn update_trigger_is(&self,old_pins: u32, new_pins: u32){
+        let mut is = self.is_val();
+        let ie = self.ie_val();
+        let trig = self.trig_val();
+        let pol = self.pol_val();
+        for n in 0..32{
+            let b = 1 << n;
+            //判断是否启用对应引脚中断
+            if(ie & b) == 0 {
+                continue;
+            }
+            //启用边缘触发 将捕捉到的极性引脚状态变化记录到is寄存器中
+            if(trig & b) == 0{
+                let old_bool = (old_pins & b)!=0;
+                let new_bool = (new_pins &b)!=0;
+                let is_pol = (pol & b )!= 0;
+                //判断触发条件 上升沿或者下降沿
+                if old_bool != new_bool{
+                    //下降沿触发
+        
+                        if !is_pol&&old_bool && !new_bool{
+                            is |= b;
+                        }
+                        //上升沿触发
+                        if is_pol&&!old_bool && new_bool{
+                            is |= b;
+                
+                    }
+                }
+            }  
+        }
+        unsafe { *self.is.get() = is; }
+    }
+    fn get_effective_pins(&self) -> u32{
+        let mut is = 0;
+        let ie = self.ie_val();
+        let pol = self.pol_val();
+        let trig = self.trig_val();
+        let latch = self.is_val();
+        let now_pins = self.get_now_pins();
+        for n in 0..32{
+            let b = 1 << n;
+            //屏蔽非使能逻辑
+            if(ie & b) == 0{
+                continue;
+            }
+            //边缘触发
+            if(trig & b) == 0{
+                if(latch & b) != 0{
+                    is |= b;
+                }
+            }
+            else{
+                //电平触发 直接根据当前引脚状态和极性寄存器来判断是否触发
+                let level = (now_pins & b) != 0;
+                let pol_level = (pol & b) != 0;
+                if level == pol_level{
+                    is |= b;
+                }
+            }
+        }
+        is
+    }
+    fn update_irq(&self){
+        let is = self.get_effective_pins();
+        self.irq.set(is != 0);
+    }
+}
+impl  GpioState {
+    //针对外设线进行进行输出处理
+    fn drive_output(&self,old_output: u32, new_output: u32,old_dir: u32, new_dir: u32){
+        for n in 0..32{
+            let b = 1 << n;
+            let was_out = (old_dir & b) != 0;
+            let is_out = (new_dir & b) != 0;
+            let old_level = (old_output & b) != 0;
+            let new_level = (new_output & b) != 0;
+            if (is_out&&!was_out)||(is_out&&was_out&&old_level != new_level){
+                self.outlines[n as usize].set(new_level);
             }
         }
     }
