@@ -201,7 +201,7 @@ impl GpioState {
         let ie = self.ie_val();
         let trig = self.trig_val();
         let pol = self.pol_val();
-        for n in 0..32{
+        /*for n in 0..32{
             let b = 1 << n;
             //判断是否启用对应引脚中断
             if(ie & b) == 0 {
@@ -226,16 +226,29 @@ impl GpioState {
                 }
             }  
         }
-        unsafe { *self.is.get() = is; }
+        unsafe { *self.is.get() = is; }*/
+        //优化后的版本 通过位运算来同时处理所有引脚的状态变化，避免了循环的使用，提高了效率
+        //这里同时对32个位进行处理并借此来实现实现对所有引脚状态的同时更新而非单独更新
+        let changed = old_pins ^ new_pins;
+        let rising = changed & new_pins;
+        let falling = changed &!new_pins;
+        let high_pol = rising & pol;
+        let low_pol = falling & !pol;
+        let validate = high_pol | low_pol;
+        let new_is = validate & ie &!trig;
+        if new_is != 0{
+            is |= new_is;
+            unsafe { *self.is.get() = is; }
+        }
     }
     fn get_effective_pins(&self) -> u32{
-        let mut is = 0;
+        //let mut is = 0;
         let ie = self.ie_val();
         let pol = self.pol_val();
         let trig = self.trig_val();
         let latch = self.is_val();
         let now_pins = self.get_now_pins();
-        for n in 0..32{
+        /*for n in 0..32{
             let b = 1 << n;
             //屏蔽非使能逻辑
             if(ie & b) == 0{
@@ -257,6 +270,10 @@ impl GpioState {
             }
         }
         is
+        */
+        let edge = latch & !trig;
+        let level_match = !(now_pins ^ pol) & trig;
+        (edge | level_match) & ie
     }
     fn update_irq(&self){
         let is = self.get_effective_pins();
