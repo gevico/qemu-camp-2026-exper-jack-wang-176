@@ -93,11 +93,13 @@ enum {
     VIRT_SPI,
     VIRT_RSPI,
     VIRT_GPIO,
+    VIRT_PWM,
 };
 //中断枚举
 enum {
     UART0_IRQ = 1,
     GPIO_IRQ = 2,
+    PWM_IRQ = 3,
     SPI_IRQ = 5,
     RSPI_IRQ = 7,
     VIRTIO_IRQ = 6, /* 6 to 13 */

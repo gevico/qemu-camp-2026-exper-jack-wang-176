@@ -97,8 +97,10 @@ static const MemMapEntry virt_memmap[] = {
     [VIRT_APLIC_S] =      {  0xd000000, APLIC_SIZE(VIRT_CPUS_MAX) },
     [VIRT_UART0] =        { 0x10000000,         0x100 },
     [VIRT_VIRTIO] =       { 0x10001000,        0x1000 },
-    //GPIO地址映射	0x1001_2000	0x1001_20FF	256 B	R/W	通用 GPIO（见第 7 章）
-    [VIRT_GPIO] =         {0X10012000,         0x100,},    
+  
+
+    [VIRT_GPIO] =         {0X10012000,         0x1000},    
+    [VIRT_PWM ] =         {0X10015000,         0x1000},
     [VIRT_FW_CFG] =       { 0x10100000,          0x18 },
     //SPI 基地址和大小
     [VIRT_SPI] =          { 0x10018000,        0x1000 },
@@ -111,6 +113,7 @@ static const MemMapEntry virt_memmap[] = {
     [VIRT_PCIE_MMIO] =    { 0x40000000,    0x40000000 },
     [VIRT_DRAM] =         { 0x80000000,           0x0 },
 };
+
 
 /* PCIe high mmio is fixed for RV32 */
 #define VIRT32_HIGH_PCIE_MMIO_BASE  0x300000000ULL
@@ -1787,6 +1790,15 @@ static void virt_machine_init(MachineState *machine)
     sysbus_mmio_map(gpio_sbd, 0, virt_memmap[VIRT_GPIO].base);
     //将gpio_irq(2)连接到plic
     sysbus_connect_irq(gpio_sbd, 0, qdev_get_gpio_in(mmio_irqchip, GPIO_IRQ));
+
+    //添加pwm控制实体
+    DeviceState *pwm_dev = qdev_new("pwm");
+    SysBusDevice *pwm_sbd = SYS_BUS_DEVICE(pwm_dev);
+    //挂载mmio内存空间和中断线
+    sysbus_realize_and_unref(pwm_sbd, &error_fatal);
+    sysbus_mmio_map(pwm_sbd, 0, virt_memmap[VIRT_PWM].base);
+    sysbus_connect_irq(pwm_sbd, 0, qdev_get_gpio_in(mmio_irqchip, PWM_IRQ));
+
 
 
     // Rust SPI rspi
