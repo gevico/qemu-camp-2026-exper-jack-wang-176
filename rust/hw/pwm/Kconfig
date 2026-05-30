@@ -1,0 +1,2 @@
+config X_PWM_RUST
+    bool
