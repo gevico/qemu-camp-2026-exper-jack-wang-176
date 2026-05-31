@@ -5,3 +5,4 @@ source ssi/Kconfig
 source timer/Kconfig
 source gpio/Kconfig
 source pwm/Kconfig
+source wdt/Kconfig

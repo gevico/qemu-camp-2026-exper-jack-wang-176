@@ -1,0 +1,30 @@
+[package]
+name = "wdt"
+version = "0.0.1"
+description = "WDT device model for QEMU"
+resolver = "2"
+publish = false
+
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+common = { path = "../../../common"}
+util = { path = "../../../util" }
+migration = { path = "../../../migration" }
+bql = { path = "../../../bql" }
+qom = { path = "../../../qom" }
+system = { path = "../../../system" }
+hwcore = { path = "../../../hw/core" }
+trace = { path = "../../../trace" }
+glib-sys.workspace = true
+
+[lib]
+crate-type = ["staticlib"]
+
+[lints]
+workspace = true

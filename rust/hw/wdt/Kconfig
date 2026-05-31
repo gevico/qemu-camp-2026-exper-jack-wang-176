@@ -1,0 +1,2 @@
+config X_WDT_RUST
+    bool

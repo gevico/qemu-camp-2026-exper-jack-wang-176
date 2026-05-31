@@ -102,6 +102,8 @@ static const MemMapEntry virt_memmap[] = {
     [VIRT_GPIO] =         {0X10012000,         0x1000},    
     [VIRT_PWM ] =         {0X10015000,         0x1000},
     [VIRT_FW_CFG] =       { 0x10100000,          0x18 },
+    //WDT地址映射和大小
+    [VIRT_WDT] =          {0x10010000,         0x1000},
     //SPI 基地址和大小
     [VIRT_SPI] =          { 0x10018000,        0x1000 },
     //RSPI 地址映射和大小
@@ -1799,6 +1801,13 @@ static void virt_machine_init(MachineState *machine)
     sysbus_mmio_map(pwm_sbd, 0, virt_memmap[VIRT_PWM].base);
     sysbus_connect_irq(pwm_sbd, 0, qdev_get_gpio_in(mmio_irqchip, PWM_IRQ));
 
+    //添加wdt控制实体
+    DeviceState *wdt_dev = qdev_new("wdt");
+    SysBusDevice *wdt_sbd = SYS_BUS_DEVICE(wdt_dev);
+    //挂载mmio内存空间和中断线
+    sysbus_realize_and_unref(wdt_sbd, &error_fatal);
+    sysbus_mmio_map(wdt_sbd,0,virt_memmap[VIRT_WDT].base);
+    sysbus_connect_irq(wdt_sbd,0,qdev_get_gpio_in(mmio_irqchip, WDT_IRQ));
 
 
     // Rust SPI rspi

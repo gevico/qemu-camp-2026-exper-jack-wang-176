@@ -70,7 +70,7 @@ impl PwmState {
             &mut uninit_field_mut!(*this, mmio),
             &PWM_OPS,
             "pwm",
-            0x1000, // 应当是 0x1000 而不是 0x100
+            0x1000,
         );
 
         uninit_field_mut!(*this, glb).write(UnsafeCell::new(0));
@@ -80,7 +80,7 @@ impl PwmState {
         uninit_field_mut!(*this, cycle_start).write(UnsafeCell::new([0; 4]));
         uninit_field_mut!(*this, phase).write(UnsafeCell::new([0; 4]));
         
-        // 修正 Timer 的初始化：它是 unsafe 的，不带参数
+        
         uninit_field_mut!(*this, timers).write([
             unsafe { Timer::new() }, unsafe { Timer::new() },
             unsafe { Timer::new() }, unsafe { Timer::new() }
@@ -97,7 +97,6 @@ impl PwmState {
     fn post_init(&self) {
         self.init_mmio(&self.mmio);
         self.init_irq(&self.irq);
-        // 修正：应调用 init_gpio_out
         self.init_gpio_out(&self.outlines);
         
         unsafe {
@@ -238,7 +237,7 @@ impl PwmState {
     }
     
     fn handler_timer(&self, i: usize) {
-        let now = CLOCK_VIRTUAL.get_ns(); // 修正：get_ns()
+        let now = CLOCK_VIRTUAL.get_ns();
         let phase = self.phase_val(i);
         if phase == 0 {
             let ctrl = self.ctrl_val(i);
@@ -247,7 +246,7 @@ impl PwmState {
             let start = self.cycle_start_val(i);
             self.outlines[i].set(pol);
             self.phase_set(i, 1);
-            self.timers[i].modify_ns(start + period as u64); // 修正
+            self.timers[i].modify_ns(start + period as u64);
         } else {
             let glb = self.glb_val() | (1 << (i + 4));
             self.glb_set(glb);
@@ -302,7 +301,7 @@ impl PwmState {
                         let pol = (data as u32 & (1 << 1)) != 0;
                         self.outlines[n].set(pol);
                     }
-                    self.update_irq(); // 修正：当 CTRL 改变时，INTIE 位可能改变，需更新中断
+                    self.update_irq();
                 },
                 0x04 => self.period_set(n, data as u32),
                 0x08 => self.duty_set(n, data as u32),
