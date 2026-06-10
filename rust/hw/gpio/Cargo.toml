@@ -13,14 +13,14 @@ repository.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-common = { path = "../../../common"}
-util = { path = "../../../util" }
-migration = { path = "../../../migration" }
-bql = { path = "../../../bql" }
-qom = { path = "../../../qom" }
-system = { path = "../../../system" }
-hwcore = { path = "../../../hw/core" }
-trace = { path = "../../../trace" }
+common = { path = "../../common"}
+util = { path = "../../util" }
+migration = { path = "../../migration" }
+bql = { path = "../../bql" }
+qom = { path = "../../qom" }
+system = { path = "../../system" }
+hwcore = { path = "../../hw/core" }
+trace = { path = "../../trace" }
 glib-sys.workspace = true
 
 [lib]

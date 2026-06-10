@@ -21,16 +21,16 @@
 #ifndef HW_G233_H
 #define HW_G233_H
 
-#include "hw/core/boards.h"
-#include "hw/riscv/riscv_hart.h"
-#include "hw/core/sysbus.h"
 #include "hw/block/flash.h"
+#include "hw/core/boards.h"
+#include "hw/core/sysbus.h"
 #include "hw/intc/riscv_imsic.h"
+#include "hw/riscv/riscv_hart.h"
 
-#define VIRT_CPUS_MAX_BITS             9
-#define VIRT_CPUS_MAX                  (1 << VIRT_CPUS_MAX_BITS)
-#define VIRT_SOCKETS_MAX_BITS          2
-#define VIRT_SOCKETS_MAX               (1 << VIRT_SOCKETS_MAX_BITS)
+#define VIRT_CPUS_MAX_BITS 9
+#define VIRT_CPUS_MAX (1 << VIRT_CPUS_MAX_BITS)
+#define VIRT_SOCKETS_MAX_BITS 2
+#define VIRT_SOCKETS_MAX (1 << VIRT_SOCKETS_MAX_BITS)
 
 #define TYPE_RISCV_G233_MACHINE MACHINE_TYPE_NAME("g233")
 typedef struct RISCVG233State RISCVG233State;
@@ -38,82 +38,83 @@ DECLARE_INSTANCE_CHECKER(RISCVG233State, RISCV_G233_MACHINE,
                          TYPE_RISCV_G233_MACHINE)
 
 typedef enum RISCVG233AIAType {
-    G233_AIA_TYPE_NONE = 0,
-    G233_AIA_TYPE_APLIC,
-    G233_AIA_TYPE_APLIC_IMSIC,
+  G233_AIA_TYPE_NONE = 0,
+  G233_AIA_TYPE_APLIC,
+  G233_AIA_TYPE_APLIC_IMSIC,
 } RISCVG233AIAType;
 
 struct RISCVG233State {
-    /*< private >*/
-    MachineState parent;
+  /*< private >*/
+  MachineState parent;
 
-    /*< public >*/
-    Notifier machine_done;
-    DeviceState *platform_bus_dev;
-    RISCVHartArrayState soc[VIRT_SOCKETS_MAX];
-    DeviceState *irqchip[VIRT_SOCKETS_MAX];
-    PFlashCFI01 *flash[2];
-    FWCfgState *fw_cfg;
+  /*< public >*/
+  Notifier machine_done;
+  DeviceState *platform_bus_dev;
+  RISCVHartArrayState soc[VIRT_SOCKETS_MAX];
+  DeviceState *irqchip[VIRT_SOCKETS_MAX];
+  PFlashCFI01 *flash[2];
+  FWCfgState *fw_cfg;
 
-    int fdt_size;
-    bool have_aclint;
-    RISCVG233AIAType aia_type;
-    int aia_guests;
-    char *oem_id;
-    char *oem_table_id;
-    OnOffAuto acpi;
-    const MemMapEntry *memmap;
-    struct GPEXHost *gpex_host;
-    OnOffAuto iommu_sys;
-    uint16_t pci_iommu_bdf;
+  int fdt_size;
+  bool have_aclint;
+  RISCVG233AIAType aia_type;
+  int aia_guests;
+  char *oem_id;
+  char *oem_table_id;
+  OnOffAuto acpi;
+  const MemMapEntry *memmap;
+  struct GPEXHost *gpex_host;
+  OnOffAuto iommu_sys;
+  uint16_t pci_iommu_bdf;
 };
-//地址枚举
+// 地址枚举
 enum {
-    VIRT_DEBUG,
-    VIRT_MROM,
-    VIRT_TEST,
-    VIRT_RTC,
-    VIRT_CLINT,
-    VIRT_ACLINT_SSWI,
-    VIRT_PLIC,
-    VIRT_APLIC_M,
-    VIRT_APLIC_S,
-    VIRT_UART0,
-    VIRT_VIRTIO,
-    VIRT_FW_CFG,
-    VIRT_IMSIC_M,
-    VIRT_IMSIC_S,
-    VIRT_FLASH,
-    VIRT_DRAM,
-    VIRT_PCIE_MMIO,
-    VIRT_PCIE_PIO,
-    VIRT_PLATFORM_BUS,
-    VIRT_PCIE_ECAM,
-    VIRT_IOMMU_SYS,
-    VIRT_SPI,
-    VIRT_RSPI,
-    VIRT_GPIO,
-    VIRT_PWM,
-    VIRT_WDT,
+  VIRT_DEBUG,
+  VIRT_MROM,
+  VIRT_TEST,
+  VIRT_RTC,
+  VIRT_CLINT,
+  VIRT_ACLINT_SSWI,
+  VIRT_PLIC,
+  VIRT_APLIC_M,
+  VIRT_APLIC_S,
+  VIRT_UART0,
+  VIRT_VIRTIO,
+  VIRT_FW_CFG,
+  VIRT_IMSIC_M,
+  VIRT_IMSIC_S,
+  VIRT_FLASH,
+  VIRT_DRAM,
+  VIRT_PCIE_MMIO,
+  VIRT_PCIE_PIO,
+  VIRT_PLATFORM_BUS,
+  VIRT_PCIE_ECAM,
+  VIRT_IOMMU_SYS,
+  VIRT_SPI,
+  VIRT_RSPI,
+  VIRT_GPIO,
+  VIRT_PWM,
+  VIRT_WDT,
 };
-//中断枚举
+// 中断枚举
 enum {
-    UART0_IRQ = 1,
-    GPIO_IRQ = 2,
-    PWM_IRQ = 3,
-    WDT_IRQ = 4,
-    SPI_IRQ = 5,
-    RSPI_IRQ = 7,
-    VIRTIO_IRQ = 6, /* 6 to 13 */
-    VIRTIO_COUNT = 8,
-    RTC_IRQ = 14,
-    PCIE_IRQ = 0x20, /* 32 to 35 */
-    IOMMU_SYS_IRQ = 0x24, /* 36-39 */
-    VIRT_PLATFORM_BUS_IRQ = 64, /* 64 to 95 */
+  UART0_IRQ = 1,
+  GPIO_IRQ = 2,
+  PWM_IRQ = 3,
+  WDT_IRQ = 4,
+  SPI_IRQ = 5,
+  RSPI_IRQ = 15,
+  G233_VIRTIO_IRQ = 6, /* 6 to 13 */
+  G233_VIRTIO_COUNT = 8,
+  RTC_IRQ = 14,
+  PCIE_IRQ = 0x20,            /* 32 to 35 */
+  IOMMU_SYS_IRQ = 0x24,       /* 36-39 */
+  VIRT_PLATFORM_BUS_IRQ = 64, /* 64 to 95 */
 };
 
 #define VIRT_PLATFORM_BUS_NUM_IRQS 32
 
+#define G233_VIRTIO_STRIDE 0x1000
 #define VIRT_IRQCHIP_NUM_MSIS 255
 #define VIRT_IRQCHIP_NUM_SOURCES 96
 #define VIRT_IRQCHIP_NUM_PRIO_BITS 3
@@ -126,23 +127,23 @@ enum {
 #define VIRT_PLIC_ENABLE_STRIDE 0x80
 #define VIRT_PLIC_CONTEXT_BASE 0x200000
 #define VIRT_PLIC_CONTEXT_STRIDE 0x1000
-#define VIRT_PLIC_SIZE(__num_context) \
-    (VIRT_PLIC_CONTEXT_BASE + (__num_context) * VIRT_PLIC_CONTEXT_STRIDE)
+#define VIRT_PLIC_SIZE(__num_context)                                          \
+  (VIRT_PLIC_CONTEXT_BASE + (__num_context) * VIRT_PLIC_CONTEXT_STRIDE)
 
-#define FDT_PCI_ADDR_CELLS    3
-#define FDT_PCI_INT_CELLS     1
-#define FDT_PLIC_ADDR_CELLS   0
-#define FDT_PLIC_INT_CELLS    1
-#define FDT_APLIC_INT_CELLS   2
-#define FDT_APLIC_ADDR_CELLS  0
-#define FDT_IMSIC_INT_CELLS   0
-#define FDT_MAX_INT_CELLS     2
-#define FDT_MAX_INT_MAP_WIDTH (FDT_PCI_ADDR_CELLS + FDT_PCI_INT_CELLS + \
-                                 1 + FDT_MAX_INT_CELLS)
-#define FDT_PLIC_INT_MAP_WIDTH  (FDT_PCI_ADDR_CELLS + FDT_PCI_INT_CELLS + \
-                                 1 + FDT_PLIC_INT_CELLS)
-#define FDT_APLIC_INT_MAP_WIDTH (FDT_PCI_ADDR_CELLS + FDT_PCI_INT_CELLS + \
-                                 1 + FDT_APLIC_INT_CELLS)
+#define FDT_PCI_ADDR_CELLS 3
+#define FDT_PCI_INT_CELLS 1
+#define FDT_PLIC_ADDR_CELLS 0
+#define FDT_PLIC_INT_CELLS 1
+#define FDT_APLIC_INT_CELLS 2
+#define FDT_APLIC_ADDR_CELLS 0
+#define FDT_IMSIC_INT_CELLS 0
+#define FDT_MAX_INT_CELLS 2
+#define FDT_MAX_INT_MAP_WIDTH                                                  \
+  (FDT_PCI_ADDR_CELLS + FDT_PCI_INT_CELLS + 1 + FDT_MAX_INT_CELLS)
+#define FDT_PLIC_INT_MAP_WIDTH                                                 \
+  (FDT_PCI_ADDR_CELLS + FDT_PCI_INT_CELLS + 1 + FDT_PLIC_INT_CELLS)
+#define FDT_APLIC_INT_MAP_WIDTH                                                \
+  (FDT_PCI_ADDR_CELLS + FDT_PCI_INT_CELLS + 1 + FDT_APLIC_INT_CELLS)
 
 /*
  * The virt machine physical address space used by some of the devices
@@ -154,14 +155,13 @@ enum {
  * of virt machine physical address space.
  */
 
-#define VIRT_IMSIC_GROUP_MAX_SIZE      (1U << IMSIC_MMIO_GROUP_MIN_SHIFT)
-#if VIRT_IMSIC_GROUP_MAX_SIZE < \
+#define VIRT_IMSIC_GROUP_MAX_SIZE (1U << IMSIC_MMIO_GROUP_MIN_SHIFT)
+#if VIRT_IMSIC_GROUP_MAX_SIZE <                                                \
     IMSIC_GROUP_SIZE(VIRT_CPUS_MAX_BITS, VIRT_IRQCHIP_MAX_GUESTS_BITS)
 #error "Can't accommodate single IMSIC group in address space"
 #endif
 
-#define VIRT_IMSIC_MAX_SIZE            (VIRT_SOCKETS_MAX * \
-                                        VIRT_IMSIC_GROUP_MAX_SIZE)
+#define VIRT_IMSIC_MAX_SIZE (VIRT_SOCKETS_MAX * VIRT_IMSIC_GROUP_MAX_SIZE)
 #if 0x4000000 < VIRT_IMSIC_MAX_SIZE
 #error "Can't accommodate all IMSIC groups in address space"
 #endif
