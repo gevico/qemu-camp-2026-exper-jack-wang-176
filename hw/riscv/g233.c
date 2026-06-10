@@ -784,7 +784,7 @@ static void create_fdt_virtio(RISCVG233State *s, uint32_t irq_virtio_phandle) {
   MachineState *ms = MACHINE(s);
   hwaddr virtio_base = s->memmap[VIRT_VIRTIO].base;
 
-  for (i = 0; i < G233_VIRTIO_NUM; i++) {
+  for (i = 0; i < G233_VIRTIO_COUNT; i++) {
     g_autofree char *name = NULL;
     uint64_t size = G233_VIRTIO_STRIDE;
     hwaddr addr = virtio_base + i * size;
