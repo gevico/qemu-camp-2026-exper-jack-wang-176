@@ -18,6 +18,8 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "qemu/osdep.h"
+
 #include "hw/riscv/g233.h"
 #include "chardev/char.h"
 #include "hw/acpi/aml-build.h"
@@ -50,7 +52,6 @@
 #include "qapi/qapi-visit-common.h"
 #include "qemu/error-report.h"
 #include "qemu/guest-random.h"
-#include "qemu/osdep.h"
 #include "qemu/units.h"
 #include "system/device_tree.h"
 #include "system/kvm.h"
